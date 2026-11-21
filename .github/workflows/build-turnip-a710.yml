@@ -28,6 +28,10 @@ on:
           - "true"
         default: "false"
 
+concurrency:
+  group: turnip-adreno710-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -53,8 +57,15 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential meson ninja-build pkg-config \
-            python3-mako python3-yaml python3-ply python3-pycparser python3-packaging \
+            python3-mako python3-yaml python3-ply python3-pycparser python3-packaging python3-venv \
             glslang-tools bison flex zlib1g-dev libexpat1-dev cmake ccache zip file
+
+      - name: Instalar Meson compatível com Mesa 26.2.6
+        run: |
+          python3 -m venv "$RUNNER_TEMP/meson-venv"
+          "$RUNNER_TEMP/meson-venv/bin/python" -m pip install --upgrade pip meson
+          echo "$RUNNER_TEMP/meson-venv/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/meson-venv/bin/meson" --version
 
       - name: Definir parâmetros
         id: params
