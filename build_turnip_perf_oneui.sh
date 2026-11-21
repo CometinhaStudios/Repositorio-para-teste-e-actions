@@ -20,7 +20,6 @@ ARGS=()
 [[ "${OPT_CACHE:-1}" == 1 ]] && ARGS+=(--cache)
 python3 "$ROOT/patches/balemuni_style_perf.py" "${ARGS[@]}"
 cp balemuni_perf_report.txt "$WORK/"
-sed -i "s/typedef const native_handle_t\\* buffer_handle_t;/typedef void\\* buffer_handle_t;/g" include/android_stub/cutils/native_handle.h || true
 mkdir -p "$WORK/bin"
 ln -sf "$NDK/clang" "$WORK/bin/cc"
 ln -sf "$NDK/clang++" "$WORK/bin/c++"
