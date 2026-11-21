@@ -5,7 +5,7 @@ green='\033[0;32m'; red='\033[0;31m'; nocolor='\033[0m'
 workdir="$(pwd)/turnip_workdir"
 ndkver="android-ndk-r29"
 ndk="$workdir/$ndkver/toolchains/llvm/prebuilt/linux-x86_64/bin"
-sdkver="36"
+sdkver="34"
 mesasrc="https://gitlab.freedesktop.org/mesa/mesa"
 srcfolder="mesa"
 
