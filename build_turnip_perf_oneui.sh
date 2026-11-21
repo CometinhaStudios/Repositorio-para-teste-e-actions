@@ -37,7 +37,7 @@ prepare_workdir() {
   curl -fL "https://dl.google.com/android/repository/$ndkver-linux.zip" -o "$ndkver-linux.zip"
   unzip -q -o "$ndkver-linux.zip"
   if [ -d "$srcfolder/.git" ]; then rm -rf "$srcfolder"; fi
-  git clone --depth=1 -b main "$mesasrc" "$srcfolder"
+  git clone --depth=1 -b mesa-26.2.6 "$mesasrc" "$srcfolder"
 }
 
 build_lib_for_android() {
