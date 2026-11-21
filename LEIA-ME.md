@@ -1,9 +1,18 @@
-# Turnip Perf + One UI (8 Gen 2)
+# Turnip Perf + OneUI 8G2 — crash-fix baseline
 
-Kit de build independente para Mesa Turnip, com correção UBWC para Adreno 740 e ajustes opcionais de desempenho.
+This workflow rebuilds the Mesa Turnip Vulkan driver for Snapdragon 8 Gen 2 / Adreno 740.
 
-O workflow está em .github/workflows/turnip_build_perf_oneui.yml. O build roda automaticamente em push na main e também pode ser iniciado manualmente em Actions.
+## Changes based on Claude's v3 kit
+- Keeps static libc++ linkage and refuses to package the library if ELF needs `libc++_shared.so`.
+- Removes the old unsafe rewrite of `buffer_handle_t` from `const native_handle_t *` to `void *`.
+- Uses a clean Meson setup for fresh GitHub Actions runners and reconfigure only when a build directory already exists.
+- Uses Android API 36 consistently in the compiler target and Meson platform setting.
+- Starts with experimental performance patches disabled. Enable them one at a time only after the baseline driver is stable.
+- Verifies that the output is an AArch64 ELF before packaging.
 
-Artifact esperado: turnip-perf-oneui-8g2, contendo o ZIP do driver e o relatório balemuni_perf_report.txt.
+## Build
+GitHub Actions runs on pushes to main or manually from Actions. Artifact:
+`turnip-perf-oneui-8g2-stable-baseline`.
 
-ATENÇÃO: destinado ao Snapdragon 8 Gen 2 / Adreno 740 em firmware Samsung One UI compatível. O binário precisa ser testado no aparelho antes de qualquer conclusão sobre estabilidade ou FPS.
+## Important
+A successful compile and absence of `libc++_shared.so` do not prove runtime compatibility. Test the baseline first on the intended Snapdragon 8 Gen 2 Samsung One UI device. If it still crashes, collect the emulator's Vulkan/driver log and Android tombstone/logcat; do not enable the experimental patches yet.
