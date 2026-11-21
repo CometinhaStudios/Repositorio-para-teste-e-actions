@@ -63,8 +63,10 @@ jobs:
       - name: Instalar Meson compatível com Mesa 26.2.6
         run: |
           python3 -m venv "$RUNNER_TEMP/meson-venv"
-          "$RUNNER_TEMP/meson-venv/bin/python" -m pip install --upgrade pip meson
+          "$RUNNER_TEMP/meson-venv/bin/python" -m pip install --upgrade \
+            pip meson packaging mako pyyaml ply pycparser
           echo "$RUNNER_TEMP/meson-venv/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/meson-venv/bin/python" -c "import packaging, mako, yaml, ply, pycparser; print('Python build modules: OK')"
           "$RUNNER_TEMP/meson-venv/bin/meson" --version
 
       - name: Definir parâmetros
