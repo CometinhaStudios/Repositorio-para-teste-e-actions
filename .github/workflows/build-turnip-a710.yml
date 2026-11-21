@@ -1,0 +1,91 @@
+name: Build Turnip Adreno 710
+
+on:
+  push:
+    paths:
+      - "turnip-a710/**"
+      - ".github/workflows/build-turnip-a710.yml"
+  workflow_dispatch:
+    inputs:
+      mesa_ref:
+        description: "Tag/branch/commit do Mesa"
+        required: true
+        default: "mesa-26.2.6"
+      base_gpu:
+        description: "Perfil Mesa base para o A710"
+        required: true
+        default: "FD725"
+      sdk:
+        description: "Android API"
+        required: true
+        default: "33"
+      lto:
+        description: "Ativar LTO"
+        required: true
+        type: choice
+        options:
+          - "false"
+          - "true"
+        default: "false"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Preparar Android SDK e NDK
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar NDK
+        run: |
+          sdkmanager --install "ndk;27.2.12479018"
+          echo "ANDROID_NDK_LATEST_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
+
+      - name: Dependências
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential meson ninja-build pkg-config \
+            python3-mako python3-yaml python3-ply python3-pycparser glslang-tools \
+            bison flex zlib1g-dev libexpat1-dev cmake ccache zip
+
+      - name: Definir parâmetros
+        id: params
+        shell: bash
+        run: |
+          echo "mesa_ref=${{ inputs.mesa_ref || 'mesa-26.2.6' }}" >> "$GITHUB_OUTPUT"
+          echo "base_gpu=${{ inputs.base_gpu || 'FD725' }}" >> "$GITHUB_OUTPUT"
+          echo "sdk=${{ inputs.sdk || '33' }}" >> "$GITHUB_OUTPUT"
+          echo "lto=${{ inputs.lto || 'false' }}" >> "$GITHUB_OUTPUT"
+
+      - name: Baixar Mesa
+        run: |
+          git clone --depth 1 --branch "${{ steps.params.outputs.mesa_ref }}" https://gitlab.freedesktop.org/mesa/mesa.git mesa
+          git -C mesa log -1 --format='%h %s'
+
+      - name: Registrar Adreno 710
+        run: python3 turnip-a710/scripts/add_a710.py mesa "${{ steps.params.outputs.base_gpu }}"
+
+      - name: Compilar Turnip
+        env:
+          SDK: ${{ steps.params.outputs.sdk }}
+          LTO: ${{ steps.params.outputs.lto }}
+        run: bash turnip-a710/scripts/build.sh
+
+      - name: Empacotar driver
+        run: bash turnip-a710/scripts/package.sh "${{ steps.params.outputs.base_gpu }}"
+
+      - name: Salvar artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: turnip-adreno710
+          path: |
+            out/*.zip
+            out/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
