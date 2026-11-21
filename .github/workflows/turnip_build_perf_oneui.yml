@@ -1,44 +1,60 @@
-name: Build Turnip Perf + OneUI 8G2
+name: Build Turnip (Crash Fix v3 - 8G2 OneUI)
+
 on:
   push:
     branches: [main]
   workflow_dispatch:
     inputs:
-      gcm: {description: Enable GCM, type: boolean, default: true}
-      zelda: {description: Enable Zelda compatibility options, type: boolean, default: true}
-      suballoc: {description: Use 512 KB suballocators, type: boolean, default: true}
-      cache: {description: Use 4 GB shader cache, type: boolean, default: true}
+      gcm:
+        description: "Enable GCM shader optimization (experimental)"
+        type: boolean
+        default: false
+      zelda:
+        description: "Enable Zelda compatibility options (experimental)"
+        type: boolean
+        default: false
+      suballoc:
+        description: "Use 512 KB suballocators"
+        type: boolean
+        default: false
+      cache:
+        description: "Increase shader cache to 4 GB"
+        type: boolean
+        default: false
+
 permissions:
   contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build patchelf unzip flex bison git perl python3-pip glslang-tools curl zip ccache python3-lxml
-          pip3 install --break-system-packages meson mako
-      - name: Compile
+          sudo apt-get install -y ninja-build patchelf unzip flex bison git perl python3-pip glslang-tools curl zip patch ccache binutils
+          python3 -m pip install --break-system-packages meson mako
+      - name: Build stable baseline
         env:
-          OPT_GCM: ${{ (github.event_name == 'push' || inputs.gcm) && '1' || '0' }}
-          OPT_ZELDA: ${{ (github.event_name == 'push' || inputs.zelda) && '1' || '0' }}
-          OPT_SUBALLOC: ${{ (github.event_name == 'push' || inputs.suballoc) && '1' || '0' }}
-          OPT_CACHE: ${{ (github.event_name == 'push' || inputs.cache) && '1' || '0' }}
+          OPT_GCM: ${{ inputs.gcm && '1' || '0' }}
+          OPT_ZELDA: ${{ inputs.zelda && '1' || '0' }}
+          OPT_SUBALLOC: ${{ inputs.suballoc && '1' || '0' }}
+          OPT_CACHE: ${{ inputs.cache && '1' || '0' }}
         run: |
           chmod +x build_turnip_perf_oneui.sh
           ./build_turnip_perf_oneui.sh
-      - name: Patch report
+      - name: Publish patch report
         if: always()
         run: |
           echo "### Patch report" >> "$GITHUB_STEP_SUMMARY"
           cat turnip_workdir/balemuni_perf_report.txt >> "$GITHUB_STEP_SUMMARY" || true
-      - name: Upload artifact
+      - name: Upload driver
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: turnip-perf-oneui-8g2
+          name: turnip-perf-oneui-8g2-stable-baseline
           path: |
             turnip_workdir/Turnip-Perf-OneUI-8G2-*.zip
             turnip_workdir/balemuni_perf_report.txt
