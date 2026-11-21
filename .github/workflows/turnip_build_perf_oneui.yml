@@ -18,14 +18,14 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build patchelf unzip flex bison git perl python3-pip glslang-tools curl zip ccache
+          sudo apt-get install -y ninja-build patchelf unzip flex bison git perl python3-pip glslang-tools curl zip ccache python3-lxml
           pip3 install --break-system-packages meson mako
       - name: Compile
         env:
-          OPT_GCM: ${{ inputs.gcm != false && '1' || '0' }}
-          OPT_ZELDA: ${{ inputs.zelda != false && '1' || '0' }}
-          OPT_SUBALLOC: ${{ inputs.suballoc != false && '1' || '0' }}
-          OPT_CACHE: ${{ inputs.cache != false && '1' || '0' }}
+          OPT_GCM: ${{ (github.event_name == 'push' || inputs.gcm) && '1' || '0' }}
+          OPT_ZELDA: ${{ (github.event_name == 'push' || inputs.zelda) && '1' || '0' }}
+          OPT_SUBALLOC: ${{ (github.event_name == 'push' || inputs.suballoc) && '1' || '0' }}
+          OPT_CACHE: ${{ (github.event_name == 'push' || inputs.cache) && '1' || '0' }}
         run: |
           chmod +x build_turnip_perf_oneui.sh
           ./build_turnip_perf_oneui.sh
