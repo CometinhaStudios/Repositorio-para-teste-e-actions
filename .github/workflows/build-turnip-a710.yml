@@ -16,11 +16,11 @@ on:
         required: true
         default: "FD725"
       sdk:
-        description: "Android API"
+        description: "Android platform SDK (minApi)"
         required: true
         default: "33"
       lto:
-        description: "Ativar LTO"
+        description: "Ativar LTO (mais otimização, pode aumentar uso de memória)"
         required: true
         type: choice
         options:
@@ -53,8 +53,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential meson ninja-build pkg-config \
-            python3-mako python3-yaml python3-ply python3-pycparser glslang-tools \
-            bison flex zlib1g-dev libexpat1-dev cmake ccache zip
+            python3-mako python3-yaml python3-ply python3-pycparser python3-packaging \
+            glslang-tools bison flex zlib1g-dev libexpat1-dev cmake ccache zip file
 
       - name: Definir parâmetros
         id: params
@@ -80,7 +80,15 @@ jobs:
         run: bash turnip-a710/scripts/build.sh
 
       - name: Empacotar driver
+        env:
+          ANDROID_MIN_API: ${{ steps.params.outputs.sdk }}
         run: bash turnip-a710/scripts/package.sh "${{ steps.params.outputs.base_gpu }}"
+
+      - name: Validar pacote
+        run: |
+          unzip -t out/*.zip
+          unzip -p out/*.zip meta.json | python3 -m json.tool
+          readelf -h mesa/build-android/src/freedreno/vulkan/libvulkan_freedreno.so | grep -E 'Class:|Machine:'
 
       - name: Salvar artefato
         uses: actions/upload-artifact@v4
